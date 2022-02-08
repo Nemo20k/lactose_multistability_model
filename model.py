@@ -1,13 +1,11 @@
-from logging import CRITICAL
 import numpy as np
+from matplotlib import pyplot as plt
 
-TMG_CRITICAL_AMOUNT = 10**6
+# ---------------    Model Class  -----------------------------------
 
+def logistic_func(x):
 
-def sigmoid(x):
-    return 1/(1 + np.exp(-x)) - 0.5
-
-
+    return 1/(1 + np.exp(-x))
 class TestMS:
     def __init__(self, number_of_bacteria: int, TMG_amount: float=0, GLU_amount: float=0, TMG_rate: float=0, GLU_rate: float=0):
         self.bacteria: np.ndarray = np.zeros(number_of_bacteria, bool)
@@ -57,3 +55,21 @@ class TestMS:
     def p_double_TMG(self):
         return logistic_func(self.switch_double_TMG_amount - 100)
 
+# ------------------------------------------------------------------
+if __name__ == "__name__":
+# ---------------    Script  -----------------------------------
+    # parameters
+    number_of_bactria = 10000
+    TMG_initial_amount = 0
+    GLU_initial_amount = 0
+    TMG_rate = 1
+    GLU_rate = 0.1
+    number_of_timesteps = 100
+
+    model_object = TestMS(number_of_bactria, TMG_initial_amount, GLU_initial_amount, TMG_rate, GLU_rate)
+
+    for timestep in range(number_of_timesteps):
+        model_object.next_time_step()
+    
+# ---------------  graphs ---------------------------------------
+    plt.plot()
