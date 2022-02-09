@@ -28,13 +28,19 @@ class TestMS:
         # update the amounts and switchs
         self.TMG_amount += self.TMG_rate
         self.GLU_amount += self.GLU_rate
-        self.switch_to_green += self.TMG_amount - self.GLU_amount
-        self.switch_double_TMG_amount += self.TMG_amount - self.GLU_amount
+
 
         # update the bacteria state accordingly
-        turned_to_green = np.random.binomial(1, p=self.switch_to_green, size=self.bacteria.size) & self.bacteria
-        turned_to_red = np.random.binomial(1, p=(1-self.switch_to_green), size=self.bacteria.size) & self.bacteria
+        turned_to_green = np.random.binomial(1, p=self.p_switch_green, size=self.bacteria.size) & np.logical_not(self.bacteria)
+        turned_to_red = np.random.binomial(1, p=(1-self.p_switch_green), size=self.bacteria.size) & self.bacteria
         self.bacteria = self.bacteria + turned_to_green - turned_to_red
+        
+        if np.random.binomial(1, p=self.p_double_TMG, size=1):
+            self.bacteria += np.random.binomial(1, p=self.p_switch_green, size=self.bacteria.size) & np.logical_not(self.bacteria)
+
+        # update switches
+        self.switch_to_green += self.TMG_amount - self.GLU_amount
+        self.switch_double_TMG_amount += self.TMG_amount - self.GLU_amount
 
         self.save_history()
 
@@ -56,23 +62,38 @@ class TestMS:
     def p_double_TMG(self):
         return logistic_func(self.switch_double_TMG_amount - 100)
 
+
+
 # ------------------------------------------------------------------
-if __name__ == "__name__":
-# ---------------    Script  -----------------------------------
+if __name__ == '__main__':
+    
+# ---------------    SCRIPT  -----------------------------------
+    print('starting script...')
     # parameters
     number_of_bactria = 10000
+    w, h = 100, 100  # for image of bacteria, should be w * h = number_of_bacteria
     TMG_initial_amount = 0
     GLU_initial_amount = 0
-    TMG_rate = 1
-    GLU_rate = 0.1
+    TMG_rate = 0.1
+    GLU_rate = 0.01
     number_of_timesteps = 100
 
     model_object = TestMS(number_of_bactria, TMG_initial_amount, GLU_initial_amount, TMG_rate, GLU_rate)
 
     for timestep in range(number_of_timesteps):
         model_object.next_time_step()
-    
-# ---------------  graphs ---------------------------------------
+
+        # save an image of the bacteria
+        imagefile_paths = []
+        im = model_object.bacteria.reshape((w,h))
+        fig = plt.imshow(im, cmap='prism', vmin=0, vmax=1)
+        plt.title('Red/Green graphic distribution')
+        imagefile_paths.append(f'bacteria_{timestep}.png')
+        fig.write_png(imagefile_paths[-1])
+ 
+        
+
+# ---------------   ploting graphs ---------------------------------------
     #  GRAPH 1 - number of green bacteria as function of TMG level
     title = "number of green bacteria as function of TMG level"
     x_title = "TMG level"
@@ -80,15 +101,18 @@ if __name__ == "__name__":
 
     x_data = model_object.TMG_history
     y_data = model_object.green_history
+
+    plt.clf()
     plt.grid()
     plt.plot(x_data, y_data)
+    plt.show()
+    plt.clf()
 
     #  GRAPH 2 - .gif File of bacteria visual
-    images = []
-    for filename in filenames:
-        images.append(imageio.imread(filename))
-    imageio.mimsave('/path/to/movie.gif', images)
-
+    print('creating gif...')
+    images = [imageio.imread(filename) for filename in imagefile_paths]
+    imageio.mimsave('bacteria.gif', images, duration=0.1)
+    print('done.')
 
 
 
